@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Lock Screen</string>
+    <string name="desc_admin">Приложению нужно право администратора, чтобы гасить экран как кнопка питания (DevicePolicyManager.lockNow). Без этого блокировка невозможна.</string>
+    <string name="btn_create_shortcut">Создать ярлык на рабочем столе</string>
+    <string name="btn_lock_now">Заблокировать сейчас</string>
+    <string name="admin_active">Права администратора активны — тап по иконке гасит экран</string>
+    <string name="admin_inactive">Требуются права администратора (первый запуск)</string>
+    <string name="shortcut_lock_short">Lock</string>
+    <string name="shortcut_lock_long">Блокировка экрана</string>
+    <string name="shortcut_settings_short">Настройки</string>
+    <string name="shortcut_settings_long">Настройки блокировки</string>
+</resources>

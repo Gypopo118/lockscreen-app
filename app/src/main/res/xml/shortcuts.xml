@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="lock_now"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_lock_short"
+        android:shortcutLongLabel="@string/shortcut_lock_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.example.lockscreen"
+            android:targetClass="com.example.lockscreen.LockActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="open_settings"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_settings_short"
+        android:shortcutLongLabel="@string/shortcut_settings_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.example.lockscreen"
+            android:targetClass="com.example.lockscreen.MainActivity">
+            <extra
+                android:name="open_settings"
+                android:value="true" />
+        </intent>
+    </shortcut>
+</shortcuts>

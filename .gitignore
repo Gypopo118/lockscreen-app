@@ -1,0 +1,17 @@
+# Gradle / Android
+.gradle/
+build/
+*/build/
+local.properties
+*.keystore
+*.jks
+captures/
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Внутренние данные агентов и индексаторы — не пушить
+.omo/
+.codegraph/
