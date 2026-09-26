@@ -5,16 +5,19 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ShortcutInfo
-import android.content.pm.ShortcutManager
-import android.graphics.drawable.Icon
-import android.os.Build
+import android.graphics.Color
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 
+/**
+ * Тап по иконке = мгновенно гасит экран (без отрисовки окна).
+ * Экран настроек показывается только при первом запуске
+ * или через long-press -> "Настройки" (extra open_settings=true).
+ */
 class MainActivity : Activity() {
     private lateinit var dpm: DevicePolicyManager
     private lateinit var adminComponent: ComponentName
@@ -25,40 +28,66 @@ class MainActivity : Activity() {
         dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
         adminComponent = ComponentName(this, MyDeviceAdminReceiver::class.java)
 
-        // Тап по иконке = сразу гасить экран.
-        // Исключение: первый запуск без прав, либо явный заход в настройки
-        // (long-press -> "Настройки" передаёт open_settings=true).
         val forceSettings = intent?.getBooleanExtra("open_settings", false) == true
-        if (dpm.isAdminActive(adminComponent) && !forceSettings) {
-            dpm.lockNow()
-            finish()
-            overridePendingTransition(0, 0)
-            return
+        if (!forceSettings) {
+            // Основной путь: Accessibility — отпечаток продолжает работать.
+            if (LockAccessibilityService.requestLock(this)) {
+                finish()
+                overridePendingTransition(0, 0)
+                return
+            }
+            // Запасной путь для тех, кто раньше выдал админа, но ещё не включил доступ.
+            if (dpm.isAdminActive(adminComponent)) {
+                try {
+                    dpm.lockNow()
+                } catch (_: SecurityException) {
+                }
+                finish()
+                overridePendingTransition(0, 0)
+                return
+            }
         }
 
+        // --- Экран настроек (первый запуск / long-press) ---
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(48, 100, 48, 48)
+            setBackgroundColor(Color.parseColor("#121212"))
         }
-        val status = TextView(this).apply { textSize = 16f }
-        val btnAdmin = Button(this).apply { text = "Выдать права администратора" }
+        val statusAccess = TextView(this).apply { textSize = 16f; setTextColor(Color.WHITE) }
+        val statusAdmin = TextView(this).apply { textSize = 14f; setTextColor(Color.LTGRAY) }
+        val btnAccess = Button(this).apply { text = getString(R.string.btn_enable_access) }
+        val btnAdmin = Button(this).apply { text = getString(R.string.btn_enable_admin) }
         val btnShortcut = Button(this).apply { text = getString(R.string.btn_create_shortcut) }
         val btnLock = Button(this).apply { text = getString(R.string.btn_lock_now) }
+        val btnRemoveAdmin = Button(this).apply { text = getString(R.string.btn_remove_admin) }
 
-        root.addView(status)
+        root.addView(statusAccess)
+        root.addView(statusAdmin)
+        root.addView(btnAccess)
         root.addView(btnAdmin)
         root.addView(btnShortcut)
         root.addView(btnLock)
+        root.addView(btnRemoveAdmin)
         setContentView(root)
 
-        fun refreshStatus() {
-            val active = dpm.isAdminActive(adminComponent)
-            status.text = if (active) getString(R.string.admin_active) else getString(R.string.admin_inactive)
-            btnAdmin.isEnabled = !active
-            btnShortcut.isEnabled = active
-            btnLock.isEnabled = active
+        fun refresh() {
+            val acc = LockAccessibilityService.isEnabled(this)
+            val admin = dpm.isAdminActive(adminComponent)
+            statusAccess.text = if (acc) getString(R.string.access_active) else getString(R.string.access_inactive)
+            statusAdmin.text = if (admin) getString(R.string.admin_active) else getString(R.string.admin_inactive)
+            btnAccess.isEnabled = !acc
+            btnLock.isEnabled = acc || admin
+            btnShortcut.isEnabled = acc || admin
+            btnRemoveAdmin.isEnabled = admin
         }
 
+        btnAccess.setOnClickListener {
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            })
+            Toast.makeText(this, getString(R.string.hint_enable_access), Toast.LENGTH_LONG).show()
+        }
         btnAdmin.setOnClickListener {
             val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
                 putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
@@ -66,39 +95,51 @@ class MainActivity : Activity() {
             }
             startActivityForResult(intent, ADMIN_REQUEST_CODE)
         }
-
         btnShortcut.setOnClickListener { createShortcut() }
-        btnLock.setOnClickListener { lockNow() }
+        btnLock.setOnClickListener {
+            if (!LockAccessibilityService.requestLock(this)) lockViaAdmin()
+        }
+        btnRemoveAdmin.setOnClickListener {
+            try {
+                dpm.removeActiveAdmin(adminComponent)
+                Toast.makeText(this, getString(R.string.admin_removed), Toast.LENGTH_SHORT).show()
+            } catch (_: SecurityException) {
+                Toast.makeText(this, getString(R.string.admin_remove_failed), Toast.LENGTH_SHORT).show()
+            }
+            refresh()
+        }
 
-        refreshStatus()
+        refresh()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Вернулись из системных настроек — обычный запуск уже настроен: сразу гасим.
+        val forceSettings = intent?.getBooleanExtra("open_settings", false) == true
+        if (!forceSettings && LockAccessibilityService.isEnabled(this)) {
+            LockAccessibilityService.requestLock(this)
+            finish()
+            overridePendingTransition(0, 0)
+        }
     }
 
     @Deprecated("Use Activity Result API on new projects")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == ADMIN_REQUEST_CODE) {
-            // Права только что выданы обычным запуском — сразу гасим экран.
-            if (dpm.isAdminActive(adminComponent)) {
-                dpm.lockNow()
-                finish()
-                overridePendingTransition(0, 0)
-            } else {
-                recreate()
-            }
-        }
+        if (requestCode == ADMIN_REQUEST_CODE) recreate()
     }
 
     private fun createShortcut() {
         val lockIntent = Intent(this, LockActivity::class.java).apply {
             action = Intent.ACTION_VIEW
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val shortcutManager = getSystemService(ShortcutManager::class.java)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val shortcutManager = getSystemService(android.content.pm.ShortcutManager::class.java)
             if (shortcutManager != null && shortcutManager.isRequestPinShortcutSupported) {
-                val shortcut = ShortcutInfo.Builder(this, "lock_shortcut")
+                val shortcut = android.content.pm.ShortcutInfo.Builder(this, "lock_shortcut")
                     .setShortLabel("Lock")
-                    .setLongLabel("Блокировка экрана")
-                    .setIcon(Icon.createWithResource(this, R.mipmap.ic_launcher))
+                    .setLongLabel(getString(R.string.shortcut_lock_long))
+                    .setIcon(android.graphics.drawable.Icon.createWithResource(this, R.mipmap.ic_launcher))
                     .setIntent(lockIntent)
                     .build()
                 shortcutManager.requestPinShortcut(shortcut, null)
@@ -118,11 +159,15 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun lockNow() {
+    private fun lockViaAdmin() {
         if (dpm.isAdminActive(adminComponent)) {
-            dpm.lockNow()
+            try {
+                dpm.lockNow()
+            } catch (_: SecurityException) {
+                Toast.makeText(this, "Нет прав администратора", Toast.LENGTH_SHORT).show()
+            }
         } else {
-            Toast.makeText(this, "Нет прав администратора", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Включите доступ в Спец. возможностях", Toast.LENGTH_SHORT).show()
         }
     }
 }

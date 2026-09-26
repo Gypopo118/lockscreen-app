@@ -1,10 +1,19 @@
 <resources>
     <string name="app_name">Lock Screen</string>
-    <string name="desc_admin">Приложению нужно право администратора, чтобы гасить экран как кнопка питания (DevicePolicyManager.lockNow). Без этого блокировка невозможна.</string>
+    <string name="desc_admin">Запасной способ блокировки через администратора (после такой блокировки телефон попросит графключ — это требование Android).</string>
+    <string name="btn_enable_access">Включить доступ (Спец. возможности)</string>
+    <string name="btn_enable_admin">Права администратора (запасной способ)</string>
     <string name="btn_create_shortcut">Создать ярлык на рабочем столе</string>
     <string name="btn_lock_now">Заблокировать сейчас</string>
-    <string name="admin_active">Права администратора активны — тап по иконке гасит экран</string>
-    <string name="admin_inactive">Требуются права администратора (первый запуск)</string>
+    <string name="btn_remove_admin">Снять права администратора</string>
+    <string name="access_active">Доступ в Спец. возможностях включён — тап по иконке гасит экран, отпечаток работает</string>
+    <string name="access_inactive">Нужен доступ: Спец. возможности → Lock Screen → Включить</string>
+    <string name="admin_active">Права администратора активны (запасной способ)</string>
+    <string name="admin_inactive">Прав администратора нет (необязательно)</string>
+    <string name="admin_removed">Права администратора сняты</string>
+    <string name="admin_remove_failed">Не удалось снять права — уберите вручную в настройках</string>
+    <string name="hint_enable_access">Включите Lock Screen в открывшихся настройках</string>
+    <string name="accessibility_desc">Lock Screen использует доступ только чтобы гасить экран (действие «Заблокировать экран»). Так отпечаток пальца продолжает разблокировать телефон.</string>
     <string name="shortcut_lock_short">Lock</string>
     <string name="shortcut_lock_long">Блокировка экрана</string>
     <string name="shortcut_settings_short">Настройки</string>
