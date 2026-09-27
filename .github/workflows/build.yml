@@ -6,9 +6,29 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Ensure stable debug keystore
+        run: |
+          git fetch origin main || true
+          if git cat-file -e origin/main:debug.keystore 2>/dev/null; then
+            echo "Taking committed debug.keystore from origin/main"
+            git show origin/main:debug.keystore > debug.keystore
+          elif [ ! -f debug.keystore ]; then
+            echo "Generating one-time persistent debug.keystore"
+            keytool -genkeypair -keystore debug.keystore -alias androiddebugkey \
+              -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10950 \
+              -dname "CN=Android Debug,O=Android,C=US"
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+            git add -f debug.keystore
+            git commit -m "CI: persistent debug keystore for stable updates" || true
+            git push origin HEAD:main || true
+          fi
+          ls -l debug.keystore
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:

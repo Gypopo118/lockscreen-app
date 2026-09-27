@@ -3,8 +3,10 @@
 build/
 */build/
 local.properties
-*.keystore
 *.jks
+# Игнорируем чужие ключи, но НЕ наш общий debug.keystore (он нужен для стабильной подписи)
+*.keystore
+!debug.keystore
 captures/
 
 # IDE

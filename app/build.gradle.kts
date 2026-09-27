@@ -11,13 +11,25 @@ android {
         applicationId = "com.example.lockscreen"
         minSdk = 28
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
+    }
+
+    signingConfigs {
+        getByName("debug") {
+            // Постоянный ключ из корня репо: подпись одинакова на всех сборках,
+            // иначе Android молча отклоняет обновление (другой ключ = другое приложение).
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
         getByName("debug") {
             isDebuggable = true
+            signingConfig = signingConfigs.getByName("debug")
         }
         getByName("release") {
             isMinifyEnabled = false
