@@ -7,14 +7,16 @@
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@android:style/Theme.DeviceDefault.DayNight">
-        <!-- Полупрозрачная тема: стартовое окно невидимо, вспышки рабочего стола нет.
-             В режиме настроек фон задаётся кодом. -->
+        <!-- Тап по иконке идёт СРАЗУ сюда: окна/сплеша/анимаций нет -->
         <activity
-            android:name=".MainActivity"
+            android:name=".LockActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:launchMode="singleTask">
+            android:theme="@style/Theme.Lock.NoDisplay"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance"
+            android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -23,15 +25,13 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
-        <!-- NoDisplay: окно вообще не создаётся — гашение до первой отрисовки -->
+        <!-- Только экран настроек (первый запуск / long-press) -->
         <activity
-            android:name=".LockActivity"
+            android:name=".MainActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.NoDisplay"
-            android:excludeFromRecents="true"
-            android:taskAffinity=""
-            android:launchMode="singleInstance"
-            android:noHistory="true" />
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Lock.Settings"
+            android:launchMode="singleTask" />
         <service
             android:name=".LockAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"

@@ -8,6 +8,9 @@
     <string name="btn_remove_admin">Снять права администратора</string>
     <string name="access_active">Доступ в Спец. возможностях включён — тап по иконке гасит экран, отпечаток работает</string>
     <string name="access_inactive">Нужен доступ: Спец. возможности → Lock Screen → Включить</string>
+    <string name="method_access">Способ блокировки: Спец. возможности (отпечаток работает)</string>
+    <string name="method_admin">Способ блокировки: Администратор (будет просить графключ!) — включите доступ выше</string>
+    <string name="method_none">Способ блокировки: не настроен — включите доступ ниже</string>
     <string name="admin_active">Права администратора активны (запасной способ)</string>
     <string name="admin_inactive">Прав администратора нет (необязательно)</string>
     <string name="admin_removed">Права администратора сняты</string>
